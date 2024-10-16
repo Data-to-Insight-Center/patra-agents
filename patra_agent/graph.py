@@ -116,6 +116,7 @@ def run_patra_graph(question):
     capture = False
     cleaned_output = ""
 
+
     for message in output:
         if "Name: db_executor" in message:
             capture = True
