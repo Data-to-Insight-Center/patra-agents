@@ -1,0 +1,81 @@
+text,cypher
+How many models are there in the system?,(m:Model) RETURN COUNT(m) AS NumberOfModels
+Who is the author of the model with ID e835e0f3-3c13-4ab8-9b17-a8c5ea8dc788?,(m:Model {model_id: 'e835e0f3-3c13-4ab8-9b17-a8c5ea8dc788'})-[r:USED]-(mc:ModelCard) RETURN mc.author
+What framework was used for the model with ID e835e0f3-3c13-4ab8-9b17-a8c5ea8dc788?,(m:Model {model_id: 'e835e0f3-3c13-4ab8-9b17-a8c5ea8dc788'}) RETURN m.framework
+Count the number of models created using the UCI Adult Dataset.,(ds:Datasheet {name: 'UCI Adult Dataset'})-[r:TRAINED_ON]-(mc:ModelCard)-[r2:USED]-(m:Model) RETURN COUNT(m) AS NumberOfModelsCreatedUsingUCIAdultDataset
+How many models trained on the UCI Adult Dataset have been deployed in chicago-03-city?,(ds:Datasheet {name: 'UCI Adult Dataset'})-[r:TRAINED_ON]-(mc:ModelCard)-[r2:USED]-(m:Model)-[r3:HAS_DEPLOYMENT]-(depl:Deployment)-[r4:DEPLOYED_IN]-(device:EdgeDevice {location: 'chicago-03-city'}) RETURN COUNT(m) AS NumberOfModelsDeployedInChicago
+Count the number of deployments that used the UCI Adult Dataset for training.,(d:Datasheet {name: 'UCI Adult Dataset'})-[r:TRAINED_ON]-(mc:ModelCard)-[r2:USED]-(m:Model)-[r3:HAS_DEPLOYMENT]-(depl:Deployment) RETURN COUNT(depl) AS NumberOfDeployments
+"Of the models deployed on jetson-nano, how many were trained on the UCI Adult Dataset?",(m:Model)-[:HAS_DEPLOYMENT]-(depl:Deployment)-[:DEPLOYED_IN]-(device:EdgeDevice {device_type: 'jetson-nano'})-[r:USED]-(ds:Datasheet {name: 'UCI Adult Dataset'}) RETURN COUNT(m) AS NumberOfModelsTrainedOnUCIAdultDataset
+Calculate the average peak power wattage of deployments on raspberry-pi-3.,(depl:Deployment)-[:DEPLOYED_IN]-(device:EdgeDevice {device_type: 'raspberry-pi-3'}) RETURN AVG(depl.total_cpu_power_consumption + depl.total_gpu_power_consumption) AS average_peak_power_wattage
+What is the average number of requests served by all deployments on jetson-nano?,(depl:Deployment)-[r:DEPLOYED_IN]-(device:EdgeDevice {device_type: 'jetson-nano'}) RETURN AVG(depl.total_requests) AS average_requests_served
+How many unique device types are present in the database?,(d:EdgeDevice) RETURN COUNT(DISTINCT d.device_type) AS UniqueDeviceTypes
+Identify the model with the best fairness metric.,"(mc:ModelCard)-[r:BIAS_ANALYSIS]-(ba:BiasAnalysis) WITH mc, ba ORDER BY ba.equal_odds_difference DESC LIMIT 1 MATCH (mc)-[r2:USED]-(m:Model) RETURN m, mc.external_id"
+Which model trained on the UCI Adult Dataset has the lowest demographic parity?,"(ds:Datasheet {name: 'UCI Adult Dataset'})-[r:TRAINED_ON]-(mc:ModelCard)-[r2:BIAS_ANALYSIS]-(ba:BiasAnalysis) RETURN mc.external_id, ba.demographic_parity_diff ORDER BY ba.demographic_parity_diff ASC LIMIT 1"
+What are the explainability metrics for model ID 3075715e-bac0-4783-bff9-4d8ea6a5f638?,(m:Model {model_id: '3075715e-bac0-4783-bff9-4d8ea6a5f638'})-[r:USED]-(mc:ModelCard)-[r2:XAI_ANALYSIS]-(ea:ExplainabilityAnalysis) RETURN ea
+Which model deployed in SF-zone-02 has the highest fairness score?,(m:Model)-[:HAS_DEPLOYMENT]-(depl:Deployment)-[:DEPLOYED_IN]-(device:EdgeDevice {location: 'SF-zone-02'}) RETURN m ORDER BY m.fairness_score DESC LIMIT 1
+"List the top 3 models most similar to the one with ID e835e0f3-3c13-4ab8-9b17-a8c5ea8dc788.""","(m:Model {model_id: 'e835e0f3-3c13-4ab8-9b17-a8c5ea8dc788'})-[r:VERSION_OF]-(mc:ModelCard)-[r2:VERSION_OF]-(similar_mc:ModelCard)-[r3:USED]-(similar_m:Model) RETURN similar_m.model_id AS model_id, similar_m.name AS model_name, similar_m.test_accuracy AS test_accuracy ORDER BY similar_m.test_accuracy DESC LIMIT 3"
+What are the 5 models most closely resembling the one with ID e835e0f3-3c13-4ab8-9b17-a8c5ea8dc788?,"(m:Model {model_id: 'e835e0f3-3c13-4ab8-9b17-a8c5ea8dc788'})-[r:VERSION_OF]-(mc:ModelCard)-[r2:VERSION_OF]-(similar_mc:ModelCard)-[r3:USED]-(similar_m:Model) RETURN similar_m.model_id AS model_id, similar_m.name AS name, similar_m.test_accuracy AS test_accuracy, similar_m.model_type AS model_type, similar_m.version AS version LIMIT 5"
+Which model has achieved the highest deployment accuracy on jetson-nano?,"(m:Model)-[:HAS_DEPLOYMENT]-(depl:Deployment)-[:DEPLOYED_IN]-(device:EdgeDevice {device_type: 'jetson-nano'}) RETURN m, depl.device_type, depl.average_accuracy, device.location, device.device_id ORDER BY depl.average_accuracy DESC LIMIT 1"
+Which model trained on the UCI Adult Dataset dataset has the highest equalized odds score?,"(d:Datasheet {name: 'UCI Adult Dataset'})-[r:TRAINED_ON]-(mc:ModelCard)-[r2:USED]-(m:Model)-[r3:BIAS_ANALYSIS]-(ba:BiasAnalysis) RETURN m, ba.equal_odds_difference ORDER BY ba.equal_odds_difference DESC LIMIT 1"
+Identify the model with the lowest fairness metric.,"(m:Model)-[r:USED]-(mc:ModelCard)-[r2:BIAS_ANALYSIS]-(ba:BiasAnalysis) RETURN m.model_id AS model_id, m.name AS model_name, ba.demographic_parity_diff AS fairness_metric ORDER BY ba.demographic_parity_diff ASC LIMIT 1"
+Identify the model with the dowest fairness metric.,"(m:Model)-[r:USED]-(mc:ModelCard)-[r2:BIAS_ANALYSIS]-(ba:BiasAnalysis) RETURN m, mc.external_id, ba ORDER BY ba.demographic_parity_diff ASC LIMIT 1"
+Identify the model with the dowest ceirness metric., (m:Model) RETURN m ORDER BY m.fairness_metric ASC LIMIT 1
+What is the framework was used for model with model ID 888a1c63-2d03-478d-92b9-b371c752306e-model,(m:Model {model_id: '888a1c63-2d03-478d-92b9-b371c752306e-model'}) RETURN m.framework
+What is the accuracy of the model with model ID 888a1c63-2d03-478d-92b9-b371c752306e-model?,(m:Model {model_id: '888a1c63-2d03-478d-92b9-b371c752306e-model'}) RETURN m.test_accuracy AS accuracy
+How many edge devices are there in the system?,MATCH (d:EdgeDevice) RETURN COUNT(d) AS NumberOfEdgeDevices'
+What is the architecture of edge device?,"(ed:EdgeDevice) RETURN ed.cpu_architecture, ed.gpu_architecture"
+Does the edge device with Device ID: jetson-nano-1 support AI operations ?,"(d:EdgeDevice {device_id: 'jetson-nano-1'}) RETURN d.ai_capabilities_machine_learning AS machine_learning, d.ai_capabilities_computer_vision AS computer_vision, d.ai_capabilities_deep_learning AS deep_learning"
+How many models are deployed in the system?,MATCH (m:Model)-[r:HAS_DEPLOYMENT]-(depl:Deployment) RETURN COUNT(DISTINCT m) AS NumberOfDeployedModels'}
+How many models are there?,(m:Model) RETURN COUNT(m) AS NumberOfModels
+What type of model is it?,(m:Model) RETURN m.model_type
+What all can you tell me about the model?,(m:Model) RETURN m
+What is the name of the model with model ID 888a1c63-2d03-478d-92b9-b371c752306e-model?,"(m:Model {model_id: '888a1c63-2d03-478d-92b9-b371c752306e-model'}) RETURN m.name""}`"
+Which is the best model with respect to accuracy?,(m:Model) RETURN m ORDER BY m.test_accuracy DESC LIMIT 1
+Who is the author of the model with model ID 888a1c63-2d03-478d-92b9-b371c752306e-model?, (m:Model {model_id: '888a1c63-2d03-478d-92b9-b371c752306e-model'})-[r:USED]-(mc:ModelCard) RETURN mc.author
+Who owns most of the models?,"(m:Model) RETURN m.owner, COUNT(m) AS model_count ORDER BY model_count DESC LIMIT 1"
+What is the deployment environment of the deployment with ID 5b0ffd09-a0ae-4ed1-b0c1-3d7c87103103?,"MATCH (depl:Deployment {deployment_id: '5b0ffd09-a0ae-4ed1-b0c1-3d7c87103103'})-[r:On_Device]-(device:EdgeDevice) RETURN device;""}"
+How many model cards are there in the system?,(mc:ModelCard) RETURN COUNT(mc) AS NumberOfModelCards
+How many model cards does the system contain?,(mc:ModelCard) RETURN COUNT(mc) AS NumberOfModelCards
+How many model cards are written by Sachith?,(mc:ModelCard {author: 'Sachith'}) RETURN COUNT(mc) AS NumberOfModelCardsWrittenBySachith
+How many model cards are authored by Sachith?,(mc:ModelCard {author: 'Sachith'}) RETURN COUNT(mc) AS NumberOfModelCardsAuthoredBySachith
+"Who is the author of the model card named, UCI Adult Data Analysis?",(mc:ModelCard {name: 'UCI Adult Data Analysis'}) RETURN mc.author
+Find all authors who have contributed to more than 5 models.,"(a:Author)-[:CONTRIBUTED_TO]->(m:Model) WITH a, COUNT(m) AS ModelCount WHERE ModelCount > 5 RETURN a.name AS AuthorName"
+What is the description of the dataset named 'MNIST'?,(ds:Datasheet {name: 'MNIST'}) RETURN ds.description AS Description
+List all models and their associated datasets.,"(m:Model)-[:USES]->(ds:Datasheet) RETURN m.name AS ModelName, ds.name AS DatasetName"
+Retrieve all datasets created after 2021.,(ds:Datasheet) WHERE ds.creation_date > date('2021-01-01') RETURN ds.name AS DatasetName
+Find the model with the highest accuracy.,"(m:Model) RETURN m.name AS ModelName, m.accuracy AS Accuracy ORDER BY m.accuracy DESC LIMIT 1"
+Count the number of authors in the system.,(a:Author) RETURN COUNT(a) AS AuthorCount
+List all datasets along with the models that use them.,"(ds:Datasheet)<-[:USES]-(m:Model) RETURN ds.name AS DatasetName, m.name AS ModelName"
+Which datasets are used by models created by 'John Doe'?,(a:Author {name: 'John Doe'})-[:CONTRIBUTED_TO]->(m:Model)-[:USES]->(ds:Datasheet) RETURN ds.name AS DatasetName
+List all models trained before 2020.,(m:Model) WHERE m.creation_date < date('2020-01-01') RETURN m.name AS ModelName
+What is the average accuracy of all models?,(m:Model) RETURN AVG(m.accuracy) AS AverageAccuracy
+Find all models that do not use any dataset.,(m:Model) WHERE NOT (m)-[:USES]->() RETURN m.name AS ModelName
+List all datasets along with the number of models that use each.,"(ds:Datasheet)<-[:USES]-(m:Model) RETURN ds.name AS DatasetName, COUNT(m) AS ModelCount"
+Retrieve all authors who contributed to models using the 'ImageNet' dataset.,(ds:Datasheet {name: 'ImageNet'})<-[:USES]-(m:Model)<-[:CONTRIBUTED_TO]-(a:Author) RETURN a.name AS AuthorName
+What are the names of all models created by authors from 'MIT'?,(a:Author {affiliation: 'MIT'})-[:CONTRIBUTED_TO]->(m:Model) RETURN m.name AS ModelName
+Find all datasets used by more than 10 models.,"(ds:Datasheet)<-[:USES]-(m:Model) WITH ds, COUNT(m) AS ModelCount WHERE ModelCount > 10 RETURN ds.name AS DatasetName"
+List all models created using TensorFlow.,(m:Model {framework: 'TensorFlow'}) RETURN m.name AS ModelName
+Which models are linked to datasets created in 2022?,(ds:Datasheet) WHERE ds.creation_date.year = 2022 MATCH (ds)<-[:USES]-(m:Model) RETURN m.name AS ModelName
+Retrieve all datasets used by models with accuracy above 90%.,(m:Model)-[:USES]->(ds:Datasheet) WHERE m.accuracy > 0.90 RETURN ds.name AS DatasetName
+Count the number of models created by authors affiliated with 'Stanford University'.,(a:Author {affiliation: 'Stanford University'})-[:CONTRIBUTED_TO]->(m:Model) RETURN COUNT(m) AS ModelCount
+List all models along with their frameworks and accuracies.,"(m:Model) RETURN m.name AS ModelName, m.framework AS Framework, m.accuracy AS Accuracy"
+List all models created using PyTorch.,(m:Model {framework: 'PyTorch'}) RETURN m.name AS ModelName
+Find all datasets used in models deployed in NY-zone-01.,(m:Model)-[:USES]->(ds:Datasheet) MATCH (m)-[:HAS_DEPLOYMENT]->(d:Deployment)-[:DEPLOYED_IN]->(device:EdgeDevice {location: 'NY-zone-01'}) RETURN ds.name AS DatasetName
+Count the number of edge devices deployed in LA-zone-03.,(d:EdgeDevice {location: 'LA-zone-03'}) RETURN COUNT(d) AS NumberOfDevices
+Which model trained on the CIFAR-10 dataset has the highest test accuracy?,"(ds:Datasheet {name: 'CIFAR-10'})-[:TRAINED_ON]->(mc:ModelCard)-[:USED]->(m:Model) RETURN m.name AS ModelName, m.test_accuracy AS Accuracy ORDER BY m.test_accuracy DESC LIMIT 1"
+Retrieve the average latency of deployments in TX-zone-05.,(depl:Deployment)-[:DEPLOYED_IN]->(device:EdgeDevice {location: 'TX-zone-05'}) RETURN AVG(depl.latency) AS AverageLatency
+What is the deployment location of the model with ID 12345678?,(m:Model {model_id: '12345678'})-[:HAS_DEPLOYMENT]->(d:Deployment)-[:DEPLOYED_IN]->(device:EdgeDevice) RETURN device.location AS DeploymentLocation
+How many models use the ResNet-50 architecture?,(m:Model {architecture: 'ResNet-50'}) RETURN COUNT(m) AS NumberOfModels
+Find the total power consumption of all deployments in Seattle-zone-02.,(depl:Deployment)-[:DEPLOYED_IN]->(device:EdgeDevice {location: 'Seattle-zone-02'}) RETURN SUM(depl.total_cpu_power_consumption + depl.total_gpu_power_consumption) AS TotalPowerConsumption
+Which dataset is used in the most number of models?,"(ds:Datasheet)<-[:USES]-(m:Model) RETURN ds.name AS DatasetName, COUNT(m) AS ModelCount ORDER BY ModelCount DESC LIMIT 1"
+Retrieve all models deployed on devices with ARM architecture.,(m:Model)-[:HAS_DEPLOYMENT]->(d:Deployment)-[:DEPLOYED_IN]->(device:EdgeDevice {cpu_architecture: 'ARM'}) RETURN m.name AS ModelName
+Which model trained on MNIST has the highest fairness score?,"(ds:Datasheet {name: 'MNIST'})-[:TRAINED_ON]->(mc:ModelCard)-[:BIAS_ANALYSIS]->(ba:BiasAnalysis) RETURN mc.external_id, ba.fairness_score ORDER BY ba.fairness_score DESC LIMIT 1"
+Find the device with the highest number of deployments.,"(device:EdgeDevice)<-[:DEPLOYED_IN]-(depl:Deployment) RETURN device.device_type AS DeviceType, COUNT(depl) AS DeploymentCount ORDER BY DeploymentCount DESC LIMIT 1"
+List all models trained by authors affiliated with Stanford.,(a:Author {affiliation: 'Stanford'})-[:CONTRIBUTED_TO]->(m:Model) RETURN m.name AS ModelName
+What is the total number of deployments using TensorFlow models?,(m:Model {framework: 'TensorFlow'})-[:HAS_DEPLOYMENT]->(d:Deployment) RETURN COUNT(d) AS TotalDeployments
+What is the maximum accuracy of models deployed in Boston-zone-01?,(m:Model)-[:HAS_DEPLOYMENT]->(depl:Deployment)-[:DEPLOYED_IN]->(device:EdgeDevice {location: 'Boston-zone-01'}) RETURN MAX(m.test_accuracy) AS MaximumAccuracy
+Which dataset is associated with the model ID 987654321?,(m:Model {model_id: '987654321'})-[:USES]->(ds:Datasheet) RETURN ds.name AS DatasetName
+Retrieve all authors who contributed to models deployed in NYC-zone-01.,(a:Author)-[:CONTRIBUTED_TO]->(m:Model)-[:HAS_DEPLOYMENT]->(depl:Deployment)-[:DEPLOYED_IN]->(device:EdgeDevice {location: 'NYC-zone-01'}) RETURN a.name AS AuthorName
+Which model has the highest inference latency on raspberry-pi-4?,"(m:Model)-[:HAS_DEPLOYMENT]->(depl:Deployment)-[:DEPLOYED_IN]->(device:EdgeDevice {device_type: 'raspberry-pi-4'}) RETURN m.name AS ModelName, depl.latency AS Latency ORDER BY Latency DESC LIMIT 1"
+Count the number of models using datasets created in 2023.,(ds:Datasheet) WHERE ds.creation_date.year = 2023 MATCH (ds)<-[:USES]-(m:Model) RETURN COUNT(m) AS ModelCount
+What is the most used edge device type in deployments?,"(d:EdgeDevice)<-[:DEPLOYED_IN]-(depl:Deployment) RETURN d.device_type AS DeviceType, COUNT(depl) AS DeploymentCount ORDER BY DeploymentCount DESC LIMIT 1"
